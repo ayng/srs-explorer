@@ -36,6 +36,13 @@ exampleField =
         |> Matrix.stamp (&&) { x = 2, y = 4 } (Matrix.repeat { width = 1, height = 6 } False)
         |> Matrix.stamp (&&) { x = 1, y = 6 } (Matrix.repeat { width = 1, height = 2 } False)
         |> Matrix.set { x = 3, y = 7 } False
+        |> Matrix.set { x = 3, y = 7 } False
+        |> Matrix.set { x = 5, y = 5 } False
+        |> Matrix.set { x = 4, y = 3 } True
+        |> Matrix.stamp (&&) { x = 7, y = 5 } (Matrix.repeat { width = 3, height = 2 } False)
+        |> Matrix.set { x = 7, y = 5 } True
+        |> Matrix.set { x = 7, y = 4 } True
+        |> Matrix.set { x = 7, y = 3 } True
 
 
 type alias Vec2 =
