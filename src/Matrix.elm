@@ -26,15 +26,6 @@ toIndex dim coordinate =
         Nothing
 
 
-toCoordinate : Dimensions -> Int -> Maybe Vec2
-toCoordinate dim index =
-    if dim.width == 0 || dim.height == 0 then
-        Nothing
-
-    else
-        Just { x = modBy dim.width index, y = index // dim.width }
-
-
 toArray : Matrix a -> Array a
 toArray (Matrix dim array) =
     array
@@ -73,14 +64,12 @@ get coordinate (Matrix dim array) =
 indexedMap : (Vec2 -> a -> b) -> Matrix a -> Matrix b
 indexedMap fn (Matrix dim array) =
     Array.indexedMap
-        (\n v ->
-            case toCoordinate dim n of
-                Just c ->
-                    fn c v
-
-                -- FIXME this should never happen
-                Nothing ->
-                    Debug.todo "index from matrix array was out of bounds of matrix"
+        (\index value ->
+            fn
+                { x = modBy dim.width index
+                , y = index // dim.width
+                }
+                value
         )
         array
         |> Matrix dim
@@ -138,7 +127,7 @@ slice topLeft bottomRight (Matrix dim array) =
 
                     -- FIXME this should never happen
                     Nothing ->
-                        Debug.todo "coordinate was outside dimensions in which it was clamped"
+                        Array.empty
             )
             (List.range 0 (newDim.height - 1))
             |> List.foldr Array.append Array.empty
