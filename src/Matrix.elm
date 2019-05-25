@@ -8,10 +8,6 @@ type alias Dimensions =
     { width : Int, height : Int }
 
 
-type alias Coordinate =
-    { x : Int, y : Int }
-
-
 type Matrix a
     = Matrix Dimensions (Array a)
 
@@ -21,7 +17,7 @@ dimensions (Matrix dim _) =
     dim
 
 
-toIndex : Dimensions -> Coordinate -> Maybe Int
+toIndex : Dimensions -> Vec2 -> Maybe Int
 toIndex dim coordinate =
     if inBounds dim coordinate then
         Just (dim.width * coordinate.y + coordinate.x)
@@ -30,7 +26,7 @@ toIndex dim coordinate =
         Nothing
 
 
-toCoordinate : Dimensions -> Int -> Maybe Coordinate
+toCoordinate : Dimensions -> Int -> Maybe Vec2
 toCoordinate dim index =
     if dim.width == 0 || dim.height == 0 then
         Nothing
@@ -44,22 +40,12 @@ toArray (Matrix dim array) =
     array
 
 
-inBounds : Dimensions -> Coordinate -> Bool
+inBounds : Dimensions -> Vec2 -> Bool
 inBounds d c =
     0 <= c.x && c.x < d.width && 0 <= c.y && c.y < d.height
 
 
-add : Coordinate -> Coordinate -> Coordinate
-add a b =
-    { x = a.x + b.x, y = a.y + b.y }
-
-
-negate : Coordinate -> Coordinate
-negate a =
-    { x = -a.x, y = -a.y }
-
-
-set : Coordinate -> a -> Matrix a -> Matrix a
+set : Vec2 -> a -> Matrix a -> Matrix a
 set coordinate value (Matrix dim array) =
     case toIndex dim coordinate of
         Just i ->
@@ -69,7 +55,7 @@ set coordinate value (Matrix dim array) =
             Matrix dim array
 
 
-get : Coordinate -> Matrix a -> Maybe a
+get : Vec2 -> Matrix a -> Maybe a
 get coordinate (Matrix dim array) =
     case toIndex dim coordinate of
         Just i ->
@@ -84,7 +70,7 @@ get coordinate (Matrix dim array) =
             Nothing
 
 
-indexedMap : (Coordinate -> a -> b) -> Matrix a -> Matrix b
+indexedMap : (Vec2 -> a -> b) -> Matrix a -> Matrix b
 indexedMap fn (Matrix dim array) =
     Array.indexedMap
         (\n v ->
@@ -126,7 +112,7 @@ clampToEdge dim coordinate =
     }
 
 
-slice : Coordinate -> Coordinate -> Matrix a -> Matrix a
+slice : Vec2 -> Vec2 -> Matrix a -> Matrix a
 slice topLeft bottomRight (Matrix dim array) =
     let
         clampedTL =
@@ -165,7 +151,7 @@ any check (Matrix _ array) =
         |> Array.foldl (||) False
 
 
-stamp : (b -> a -> a) -> Coordinate -> Matrix b -> Matrix a -> Matrix a
+stamp : (b -> a -> a) -> Vec2 -> Matrix b -> Matrix a -> Matrix a
 stamp fn offset offsetMatrix fixedMatrix =
     List.foldl
         (>>)
@@ -174,7 +160,7 @@ stamp fn offset offsetMatrix fixedMatrix =
             (\offsetCoordinate offsetValue ->
                 let
                     fixedCoordinate =
-                        add offsetCoordinate offset
+                        Vec2.add offsetCoordinate offset
                 in
                 case get fixedCoordinate fixedMatrix of
                     Just fixedValue ->
@@ -190,7 +176,7 @@ stamp fn offset offsetMatrix fixedMatrix =
         fixedMatrix
 
 
-intersection : (a -> b -> c) -> Coordinate -> Matrix a -> Matrix b -> Matrix c
+intersection : (a -> b -> c) -> Vec2 -> Matrix a -> Matrix b -> Matrix c
 intersection fn offset (Matrix offsetDim offsetArray) (Matrix fixedDim fixedArray) =
     let
         offsetTL =
