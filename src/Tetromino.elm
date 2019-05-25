@@ -308,6 +308,34 @@ jlstzOffsets rotation orientation =
                     ]
 
 
+doesCollide : Vec2 -> Matrix Bool -> Matrix Bool -> Bool
+doesCollide offset piece field =
+    let
+        insidePart =
+            Matrix.intersection (&&) offset piece field
+
+        insideDim =
+            Matrix.dimensions insidePart
+
+        pieceDim =
+            Matrix.dimensions piece
+
+        outsidePart =
+            Matrix.stamp
+                (\_ _ -> False)
+                (Matrix.clampToEdge pieceDim (Vec2.negate offset))
+                (Matrix.repeat insideDim False)
+                piece
+
+        doesCollideWithWall =
+            Matrix.any identity outsidePart
+
+        doesCollideInside =
+            Matrix.any identity insidePart
+    in
+    doesCollideWithWall || doesCollideInside
+
+
 rotateCW =
     rotate Clockwise
 
@@ -345,7 +373,7 @@ rotate rotation playfield tetromino =
             List.Extra.find
                 (\offset ->
                     not
-                        (Matrix.doesCollide
+                        (doesCollide
                             (Vec2.add tetromino.position offset)
                             rotatedMatrix
                             playfield
@@ -374,7 +402,7 @@ move offset playfield tetromino =
         newPosition =
             Vec2.add offset tetromino.position
     in
-    if Matrix.doesCollide newPosition tetromino.matrix playfield then
+    if doesCollide newPosition tetromino.matrix playfield then
         tetromino
 
     else

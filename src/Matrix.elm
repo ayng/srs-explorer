@@ -1,6 +1,7 @@
-module Matrix exposing (Matrix, doesCollide, repeat, rotateCCW, rotateCW, set, stamp, toLists)
+module Matrix exposing (Matrix, any, clampToEdge, dimensions, intersection, repeat, rotateCCW, rotateCW, set, stamp, toLists)
 
 import Array exposing (Array)
+import Vec2 exposing (Vec2)
 
 
 type alias Dimensions =
@@ -15,22 +16,27 @@ type Matrix a
     = Matrix Dimensions (Array a)
 
 
+dimensions : Matrix a -> Dimensions
+dimensions (Matrix dim _) =
+    dim
+
+
 toIndex : Dimensions -> Coordinate -> Maybe Int
-toIndex dimensions coordinate =
-    if inBounds dimensions coordinate then
-        Just (dimensions.width * coordinate.y + coordinate.x)
+toIndex dim coordinate =
+    if inBounds dim coordinate then
+        Just (dim.width * coordinate.y + coordinate.x)
 
     else
         Nothing
 
 
 toCoordinate : Dimensions -> Int -> Maybe Coordinate
-toCoordinate dimensions index =
-    if dimensions.width == 0 || dimensions.height == 0 then
+toCoordinate dim index =
+    if dim.width == 0 || dim.height == 0 then
         Nothing
 
     else
-        Just { x = modBy dimensions.width index, y = index // dimensions.width }
+        Just { x = modBy dim.width index, y = index // dim.width }
 
 
 toArray : Matrix a -> Array a
@@ -54,13 +60,13 @@ negate a =
 
 
 set : Coordinate -> a -> Matrix a -> Matrix a
-set coordinate value (Matrix dimensions array) =
-    case toIndex dimensions coordinate of
+set coordinate value (Matrix dim array) =
+    case toIndex dim coordinate of
         Just i ->
-            Matrix dimensions (Array.set i value array)
+            Matrix dim (Array.set i value array)
 
         Nothing ->
-            Matrix dimensions array
+            Matrix dim array
 
 
 get : Coordinate -> Matrix a -> Maybe a
@@ -95,26 +101,26 @@ indexedMap fn (Matrix dim array) =
 
 
 repeat : Dimensions -> a -> Matrix a
-repeat dimensions value =
-    Matrix dimensions (Array.repeat (dimensions.width * dimensions.height) value)
+repeat dim value =
+    Matrix dim (Array.repeat (dim.width * dim.height) value)
 
 
 toLists : Matrix a -> List (List a)
-toLists (Matrix dimensions array) =
+toLists (Matrix dim array) =
     List.map
         (\n ->
             Array.toList
                 (Array.slice
-                    (n * dimensions.width)
-                    ((n + 1) * dimensions.width)
+                    (n * dim.width)
+                    ((n + 1) * dim.width)
                     array
                 )
         )
-        (List.range 0 (dimensions.height - 1))
+        (List.range 0 (dim.height - 1))
 
 
-coordinateClamp : Dimensions -> Coordinate -> Coordinate
-coordinateClamp dim coordinate =
+clampToEdge : Dimensions -> Vec2 -> Vec2
+clampToEdge dim coordinate =
     { x = clamp 0 dim.width coordinate.x
     , y = clamp 0 dim.height coordinate.y
     }
@@ -124,10 +130,10 @@ slice : Coordinate -> Coordinate -> Matrix a -> Matrix a
 slice topLeft bottomRight (Matrix dim array) =
     let
         clampedTL =
-            coordinateClamp dim topLeft
+            clampToEdge dim topLeft
 
         clampedBR =
-            coordinateClamp dim bottomRight
+            clampToEdge dim bottomRight
 
         newDim =
             { width = clampedBR.x - clampedTL.x
@@ -157,34 +163,6 @@ any : (a -> Bool) -> Matrix a -> Bool
 any check (Matrix _ array) =
     Array.map check array
         |> Array.foldl (||) False
-
-
-doesCollide : Coordinate -> Matrix Bool -> Matrix Bool -> Bool
-doesCollide offset piece field =
-    let
-        (Matrix pieceDim _) =
-            piece
-
-        (Matrix insideDim _) =
-            insidePart
-
-        insidePart =
-            intersection (&&) offset piece field
-
-        outsidePart =
-            stamp
-                (\_ _ -> False)
-                (coordinateClamp pieceDim (negate offset))
-                (repeat insideDim False)
-                piece
-
-        doesCollideWithWall =
-            any identity outsidePart
-
-        doesCollideInside =
-            any identity insidePart
-    in
-    doesCollideWithWall || doesCollideInside
 
 
 stamp : (b -> a -> a) -> Coordinate -> Matrix b -> Matrix a -> Matrix a
