@@ -24,25 +24,21 @@ main =
 -- MODEL
 
 
-type alias Playfield =
-    Matrix Bool
-
-
 exampleField =
-    Matrix.repeat { width = 10, height = 10 } True
-        |> Matrix.stamp (&&) { x = 0, y = 0 } (Matrix.repeat { width = 4, height = 3 } False)
-        |> Matrix.stamp (&&) { x = 4, y = 0 } (Matrix.repeat { width = 6, height = 5 } False)
-        |> Matrix.stamp (&&) { x = 0, y = 3 } (Matrix.repeat { width = 2, height = 2 } False)
-        |> Matrix.stamp (&&) { x = 2, y = 4 } (Matrix.repeat { width = 1, height = 6 } False)
-        |> Matrix.stamp (&&) { x = 1, y = 6 } (Matrix.repeat { width = 1, height = 2 } False)
-        |> Matrix.set { x = 3, y = 7 } False
-        |> Matrix.set { x = 3, y = 7 } False
-        |> Matrix.set { x = 5, y = 5 } False
-        |> Matrix.set { x = 4, y = 3 } True
-        |> Matrix.stamp (&&) { x = 7, y = 5 } (Matrix.repeat { width = 3, height = 2 } False)
-        |> Matrix.set { x = 7, y = 5 } True
-        |> Matrix.set { x = 7, y = 4 } True
-        |> Matrix.set { x = 7, y = 3 } True
+    Matrix.repeat { width = 10, height = 10 } Tetromino.GarbageBlock
+        |> Matrix.stamp (\a _ -> a) { x = 0, y = 0 } (Matrix.repeat { width = 4, height = 3 } Tetromino.EmptyBlock)
+        |> Matrix.stamp (\a _ -> a) { x = 4, y = 0 } (Matrix.repeat { width = 6, height = 5 } Tetromino.EmptyBlock)
+        |> Matrix.stamp (\a _ -> a) { x = 0, y = 3 } (Matrix.repeat { width = 2, height = 2 } Tetromino.EmptyBlock)
+        |> Matrix.stamp (\a _ -> a) { x = 2, y = 4 } (Matrix.repeat { width = 1, height = 6 } Tetromino.EmptyBlock)
+        |> Matrix.stamp (\a _ -> a) { x = 1, y = 6 } (Matrix.repeat { width = 1, height = 2 } Tetromino.EmptyBlock)
+        |> Matrix.set { x = 3, y = 7 } Tetromino.EmptyBlock
+        |> Matrix.set { x = 3, y = 7 } Tetromino.EmptyBlock
+        |> Matrix.set { x = 5, y = 5 } Tetromino.EmptyBlock
+        |> Matrix.set { x = 4, y = 3 } Tetromino.GarbageBlock
+        |> Matrix.stamp (\a _ -> a) { x = 7, y = 5 } (Matrix.repeat { width = 3, height = 2 } Tetromino.EmptyBlock)
+        |> Matrix.set { x = 7, y = 5 } Tetromino.GarbageBlock
+        |> Matrix.set { x = 7, y = 4 } Tetromino.GarbageBlock
+        |> Matrix.set { x = 7, y = 3 } Tetromino.GarbageBlock
 
 
 type alias Vec2 =
@@ -52,7 +48,7 @@ type alias Vec2 =
 
 
 type alias Model =
-    { field : Playfield
+    { field : Tetromino.Playfield
     , piece : Tetromino.Tetromino
     }
 
@@ -137,8 +133,8 @@ keyDecoder =
 -- VIEW
 
 
-viewBoolTable : List (List Bool) -> Html msg
-viewBoolTable boolTable =
+viewBlockTable : List (List Tetromino.Block) -> Html msg
+viewBlockTable blockTable =
     let
         rowList =
             List.map
@@ -149,18 +145,25 @@ viewBoolTable boolTable =
                                 td
                                     [ style "width" "36px"
                                     , style "height" "36px"
-                                    , if col then
-                                        style "background-color" "black"
+                                    , case col of
+                                        Tetromino.EmptyBlock ->
+                                            style "background-color" "lightgray"
 
-                                      else
-                                        style "background-color" "gray"
+                                        Tetromino.GarbageBlock ->
+                                            style "background-color" "gray"
+
+                                        Tetromino.ConflictBlock ->
+                                            style "background-color" "red"
+
+                                        _ ->
+                                            style "background-color" "black"
                                     ]
                                     []
                             )
                             row
                         )
                 )
-                boolTable
+                blockTable
     in
     table [] rowList
 
@@ -183,10 +186,10 @@ view model =
         , button [ onClick (Move { x = -1, y = 0 }) ] [ text "move left" ]
         , button [ onClick (Move { x = 0, y = 1 }) ] [ text "move down" ]
         , button [ onClick (Move { x = 0, y = -1 }) ] [ text "move up" ]
-        , viewBoolTable
+        , viewBlockTable
             (Matrix.toLists
                 (Matrix.stamp
-                    (||)
+                    Tetromino.collideBlock
                     model.piece.position
                     model.piece.matrix
                     model.field
