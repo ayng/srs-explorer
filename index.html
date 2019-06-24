@@ -4357,6 +4357,8 @@ function _Browser_load(url)
 		}
 	}));
 }
+var author$project$Block$Empty = {$: 'Empty'};
+var author$project$Block$Garbage = {$: 'Garbage'};
 var author$project$Matrix$Matrix = F2(
 	function (a, b) {
 		return {$: 'Matrix', a: a, b: b};
@@ -4623,11 +4625,11 @@ var elm$core$Array$repeat = F2(
 			});
 	});
 var author$project$Matrix$repeat = F2(
-	function (dimensions, value) {
+	function (dim, value) {
 		return A2(
 			author$project$Matrix$Matrix,
-			dimensions,
-			A2(elm$core$Array$repeat, dimensions.width * dimensions.height, value));
+			dim,
+			A2(elm$core$Array$repeat, dim.width * dim.height, value));
 	});
 var elm$core$Basics$and = _Basics_and;
 var author$project$Matrix$inBounds = F2(
@@ -4639,8 +4641,8 @@ var elm$core$Maybe$Just = function (a) {
 };
 var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var author$project$Matrix$toIndex = F2(
-	function (dimensions, coordinate) {
-		return A2(author$project$Matrix$inBounds, dimensions, coordinate) ? elm$core$Maybe$Just((dimensions.width * coordinate.y) + coordinate.x) : elm$core$Maybe$Nothing;
+	function (dim, coordinate) {
+		return A2(author$project$Matrix$inBounds, dim, coordinate) ? elm$core$Maybe$Just((dim.width * coordinate.y) + coordinate.x) : elm$core$Maybe$Nothing;
 	});
 var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
 var elm$core$Array$bitMask = 4294967295 >>> (32 - elm$core$Array$shiftStep);
@@ -4697,22 +4699,18 @@ var elm$core$Array$set = F3(
 	});
 var author$project$Matrix$set = F3(
 	function (coordinate, value, _n0) {
-		var dimensions = _n0.a;
+		var dim = _n0.a;
 		var array = _n0.b;
-		var _n1 = A2(author$project$Matrix$toIndex, dimensions, coordinate);
+		var _n1 = A2(author$project$Matrix$toIndex, dim, coordinate);
 		if (_n1.$ === 'Just') {
 			var i = _n1.a;
 			return A2(
 				author$project$Matrix$Matrix,
-				dimensions,
+				dim,
 				A3(elm$core$Array$set, i, value, array));
 		} else {
-			return A2(author$project$Matrix$Matrix, dimensions, array);
+			return A2(author$project$Matrix$Matrix, dim, array);
 		}
-	});
-var author$project$Matrix$add = F2(
-	function (a, b) {
-		return {x: a.x + b.x, y: a.y + b.y};
 	});
 var elm$core$Array$getHelp = F3(
 	function (shift, index, tree) {
@@ -4765,15 +4763,6 @@ var author$project$Matrix$get = F2(
 			return elm$core$Maybe$Nothing;
 		}
 	});
-var elm$core$Basics$modBy = _Basics_modBy;
-var author$project$Matrix$toCoordinate = F2(
-	function (dimensions, index) {
-		return ((!dimensions.width) || (!dimensions.height)) ? elm$core$Maybe$Nothing : elm$core$Maybe$Just(
-			{
-				x: A2(elm$core$Basics$modBy, dimensions.width, index),
-				y: (index / dimensions.width) | 0
-			});
-	});
 var elm$core$Basics$True = {$: 'True'};
 var elm$core$Elm$JsArray$foldl = _JsArray_foldl;
 var elm$core$Elm$JsArray$indexedMap = _JsArray_indexedMap;
@@ -4813,7 +4802,7 @@ var elm$core$Array$indexedMap = F2(
 			true,
 			A3(elm$core$Elm$JsArray$foldl, helper, initialBuilder, tree));
 	});
-var elm$core$Debug$todo = _Debug_todo;
+var elm$core$Basics$modBy = _Basics_modBy;
 var author$project$Matrix$indexedMap = F2(
 	function (fn, _n0) {
 		var dim = _n0.a;
@@ -4824,19 +4813,14 @@ var author$project$Matrix$indexedMap = F2(
 			A2(
 				elm$core$Array$indexedMap,
 				F2(
-					function (n, v) {
-						var _n1 = A2(author$project$Matrix$toCoordinate, dim, n);
-						if (_n1.$ === 'Just') {
-							var c = _n1.a;
-							return A2(fn, c, v);
-						} else {
-							return _Debug_todo(
-								'Matrix',
-								{
-									start: {line: 91, column: 21},
-									end: {line: 91, column: 31}
-								})('index from matrix array was out of bounds of matrix');
-						}
+					function (index, value) {
+						return A2(
+							fn,
+							{
+								x: A2(elm$core$Basics$modBy, dim.width, index),
+								y: (index / dim.width) | 0
+							},
+							value);
 					}),
 				array));
 	});
@@ -4845,6 +4829,10 @@ var author$project$Matrix$toArray = function (_n0) {
 	var array = _n0.b;
 	return array;
 };
+var author$project$Vec2$add = F2(
+	function (a, b) {
+		return {x: a.x + b.x, y: a.y + b.y};
+	});
 var elm$core$Basics$composeR = F3(
 	function (f, g, x) {
 		return g(
@@ -4865,7 +4853,7 @@ var author$project$Matrix$stamp = F4(
 						author$project$Matrix$indexedMap,
 						F2(
 							function (offsetCoordinate, offsetValue) {
-								var fixedCoordinate = A2(author$project$Matrix$add, offsetCoordinate, offset);
+								var fixedCoordinate = A2(author$project$Vec2$add, offsetCoordinate, offset);
 								var _n0 = A2(author$project$Matrix$get, fixedCoordinate, fixedMatrix);
 								if (_n0.$ === 'Just') {
 									var fixedValue = _n0.a;
@@ -4883,83 +4871,102 @@ var author$project$Matrix$stamp = F4(
 var author$project$Main$exampleField = A3(
 	author$project$Matrix$set,
 	{x: 7, y: 3},
-	true,
+	author$project$Block$Garbage,
 	A3(
 		author$project$Matrix$set,
 		{x: 7, y: 4},
-		true,
+		author$project$Block$Garbage,
 		A3(
 			author$project$Matrix$set,
 			{x: 7, y: 5},
-			true,
+			author$project$Block$Garbage,
 			A4(
 				author$project$Matrix$stamp,
-				elm$core$Basics$and,
+				F2(
+					function (a, _n5) {
+						return a;
+					}),
 				{x: 7, y: 5},
 				A2(
 					author$project$Matrix$repeat,
 					{height: 2, width: 3},
-					false),
+					author$project$Block$Empty),
 				A3(
 					author$project$Matrix$set,
 					{x: 4, y: 3},
-					true,
+					author$project$Block$Garbage,
 					A3(
 						author$project$Matrix$set,
 						{x: 5, y: 5},
-						false,
+						author$project$Block$Empty,
 						A3(
 							author$project$Matrix$set,
 							{x: 3, y: 7},
-							false,
+							author$project$Block$Empty,
 							A3(
 								author$project$Matrix$set,
 								{x: 3, y: 7},
-								false,
+								author$project$Block$Empty,
 								A4(
 									author$project$Matrix$stamp,
-									elm$core$Basics$and,
+									F2(
+										function (a, _n4) {
+											return a;
+										}),
 									{x: 1, y: 6},
 									A2(
 										author$project$Matrix$repeat,
 										{height: 2, width: 1},
-										false),
+										author$project$Block$Empty),
 									A4(
 										author$project$Matrix$stamp,
-										elm$core$Basics$and,
+										F2(
+											function (a, _n3) {
+												return a;
+											}),
 										{x: 2, y: 4},
 										A2(
 											author$project$Matrix$repeat,
 											{height: 6, width: 1},
-											false),
+											author$project$Block$Empty),
 										A4(
 											author$project$Matrix$stamp,
-											elm$core$Basics$and,
+											F2(
+												function (a, _n2) {
+													return a;
+												}),
 											{x: 0, y: 3},
 											A2(
 												author$project$Matrix$repeat,
 												{height: 2, width: 2},
-												false),
+												author$project$Block$Empty),
 											A4(
 												author$project$Matrix$stamp,
-												elm$core$Basics$and,
+												F2(
+													function (a, _n1) {
+														return a;
+													}),
 												{x: 4, y: 0},
 												A2(
 													author$project$Matrix$repeat,
 													{height: 5, width: 6},
-													false),
+													author$project$Block$Empty),
 												A4(
 													author$project$Matrix$stamp,
-													elm$core$Basics$and,
+													F2(
+														function (a, _n0) {
+															return a;
+														}),
 													{x: 0, y: 0},
 													A2(
 														author$project$Matrix$repeat,
 														{height: 3, width: 4},
-														false),
+														author$project$Block$Empty),
 													A2(
 														author$project$Matrix$repeat,
 														{height: 10, width: 10},
-														true))))))))))))));
+														author$project$Block$Garbage))))))))))))));
+var author$project$Block$T = {$: 'T'};
 var author$project$Tetromino$T = {$: 'T'};
 var author$project$Tetromino$Up = {$: 'Up'};
 var author$project$Tetromino$t = {
@@ -4967,23 +4974,23 @@ var author$project$Tetromino$t = {
 	matrix: A3(
 		author$project$Matrix$set,
 		{x: 2, y: 1},
-		true,
+		author$project$Block$T,
 		A3(
 			author$project$Matrix$set,
 			{x: 1, y: 1},
-			true,
+			author$project$Block$T,
 			A3(
 				author$project$Matrix$set,
 				{x: 0, y: 1},
-				true,
+				author$project$Block$T,
 				A3(
 					author$project$Matrix$set,
 					{x: 1, y: 0},
-					true,
+					author$project$Block$T,
 					A2(
 						author$project$Matrix$repeat,
 						{height: 3, width: 3},
-						false))))),
+						author$project$Block$Empty))))),
 	orientation: author$project$Tetromino$Up,
 	position: {x: 0, y: 0}
 };
@@ -5960,6 +5967,37 @@ var elm$browser$Browser$Events$onKeyDown = A2(elm$browser$Browser$Events$on, elm
 var author$project$Main$subscriptions = function (model) {
 	return elm$browser$Browser$Events$onKeyDown(author$project$Main$keyDecoder);
 };
+var author$project$Block$Conflict = {$: 'Conflict'};
+var author$project$Block$collide = F2(
+	function (a, b) {
+		if (a.$ === 'Empty') {
+			if (b.$ === 'Empty') {
+				return author$project$Block$Empty;
+			} else {
+				return b;
+			}
+		} else {
+			if (b.$ === 'Empty') {
+				return a;
+			} else {
+				return author$project$Block$Conflict;
+			}
+		}
+	});
+var author$project$Block$isConflict = function (block) {
+	if (block.$ === 'Conflict') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var author$project$Block$isNotEmpty = function (block) {
+	if (block.$ === 'Empty') {
+		return false;
+	} else {
+		return true;
+	}
+};
 var elm$core$Array$foldl = F3(
 	function (func, baseCase, _n0) {
 		var tree = _n0.c;
@@ -6018,13 +6056,17 @@ var elm$core$Basics$clamp = F3(
 	function (low, high, number) {
 		return (_Utils_cmp(number, low) < 0) ? low : ((_Utils_cmp(number, high) > 0) ? high : number);
 	});
-var author$project$Matrix$coordinateClamp = F2(
+var author$project$Matrix$clampToEdge = F2(
 	function (dim, coordinate) {
 		return {
 			x: A3(elm$core$Basics$clamp, 0, dim.width, coordinate.x),
 			y: A3(elm$core$Basics$clamp, 0, dim.height, coordinate.y)
 		};
 	});
+var author$project$Matrix$dimensions = function (_n0) {
+	var dim = _n0.a;
+	return dim;
+};
 var elm$core$Elm$JsArray$appendN = _JsArray_appendN;
 var elm$core$Elm$JsArray$slice = _JsArray_slice;
 var elm$core$Array$appendHelpBuilder = F2(
@@ -6402,8 +6444,8 @@ var author$project$Matrix$slice = F3(
 	function (topLeft, bottomRight, _n0) {
 		var dim = _n0.a;
 		var array = _n0.b;
-		var clampedTL = A2(author$project$Matrix$coordinateClamp, dim, topLeft);
-		var clampedBR = A2(author$project$Matrix$coordinateClamp, dim, bottomRight);
+		var clampedTL = A2(author$project$Matrix$clampToEdge, dim, topLeft);
+		var clampedBR = A2(author$project$Matrix$clampToEdge, dim, bottomRight);
 		var newDim = {height: clampedBR.y - clampedTL.y, width: clampedBR.x - clampedTL.x};
 		return (!(newDim.width * newDim.height)) ? A2(author$project$Matrix$Matrix, newDim, elm$core$Array$empty) : A2(
 			author$project$Matrix$Matrix,
@@ -6425,12 +6467,7 @@ var author$project$Matrix$slice = F3(
 							var i = _n1.a;
 							return A3(elm$core$Array$slice, i, i + newDim.width, array);
 						} else {
-							return _Debug_todo(
-								'Matrix',
-								{
-									start: {line: 149, column: 25},
-									end: {line: 149, column: 35}
-								})('coordinate was outside dimensions in which it was clamped');
+							return elm$core$Array$empty;
 						}
 					},
 					A2(elm$core$List$range, 0, newDim.height - 1))));
@@ -6504,40 +6541,34 @@ var author$project$Matrix$intersection = F4(
 					elm$core$Array$toList(trimmedOffsetArray),
 					elm$core$Array$toList(trimmedFixedArray))));
 	});
-var author$project$Matrix$negate = function (a) {
+var author$project$Vec2$negate = function (a) {
 	return {x: -a.x, y: -a.y};
 };
-var author$project$Matrix$doesCollide = F3(
+var author$project$Tetromino$doesCollide = F3(
 	function (offset, piece, field) {
-		var insidePart = A4(author$project$Matrix$intersection, elm$core$Basics$and, offset, piece, field);
-		var doesCollideInside = A2(author$project$Matrix$any, elm$core$Basics$identity, insidePart);
-		var _n0 = piece;
-		var pieceDim = _n0.a;
-		var _n1 = insidePart;
-		var insideDim = _n1.a;
+		var pieceDim = author$project$Matrix$dimensions(piece);
+		var insidePart = A4(author$project$Matrix$intersection, author$project$Block$collide, offset, piece, field);
+		var insideDim = author$project$Matrix$dimensions(insidePart);
 		var outsidePart = A4(
 			author$project$Matrix$stamp,
 			F2(
-				function (_n2, _n3) {
-					return false;
+				function (_n0, _n1) {
+					return author$project$Block$Empty;
 				}),
 			A2(
-				author$project$Matrix$coordinateClamp,
+				author$project$Matrix$clampToEdge,
 				pieceDim,
-				author$project$Matrix$negate(offset)),
-			A2(author$project$Matrix$repeat, insideDim, false),
+				author$project$Vec2$negate(offset)),
+			A2(author$project$Matrix$repeat, insideDim, author$project$Block$Empty),
 			piece);
-		var doesCollideWithWall = A2(author$project$Matrix$any, elm$core$Basics$identity, outsidePart);
+		var doesCollideWithWall = A2(author$project$Matrix$any, author$project$Block$isNotEmpty, outsidePart);
+		var doesCollideInside = A2(author$project$Matrix$any, author$project$Block$isConflict, insidePart);
 		return doesCollideWithWall || doesCollideInside;
-	});
-var author$project$Vec2$add = F2(
-	function (a, b) {
-		return {x: a.x + b.x, y: a.y + b.y};
 	});
 var author$project$Tetromino$move = F3(
 	function (offset, playfield, tetromino) {
 		var newPosition = A2(author$project$Vec2$add, offset, tetromino.position);
-		return A3(author$project$Matrix$doesCollide, newPosition, tetromino.matrix, playfield) ? tetromino : _Utils_update(
+		return A3(author$project$Tetromino$doesCollide, newPosition, tetromino.matrix, playfield) ? tetromino : _Utils_update(
 			tetromino,
 			{position: newPosition});
 	});
@@ -6610,15 +6641,15 @@ var author$project$Matrix$rotateLists = F2(
 			A2(elm$core$List$map, elm$core$List$reverse, grid));
 	});
 var author$project$Matrix$toLists = function (_n0) {
-	var dimensions = _n0.a;
+	var dim = _n0.a;
 	var array = _n0.b;
 	return A2(
 		elm$core$List$map,
 		function (n) {
 			return elm$core$Array$toList(
-				A3(elm$core$Array$slice, n * dimensions.width, (n + 1) * dimensions.width, array));
+				A3(elm$core$Array$slice, n * dim.width, (n + 1) * dim.width, array));
 		},
-		A2(elm$core$List$range, 0, dimensions.height - 1));
+		A2(elm$core$List$range, 0, dim.height - 1));
 };
 var elm$core$List$append = F2(
 	function (xs, ys) {
@@ -6885,7 +6916,7 @@ var author$project$Tetromino$rotate = F3(
 			elm_community$list_extra$List$Extra$find,
 			function (offset) {
 				return !A3(
-					author$project$Matrix$doesCollide,
+					author$project$Tetromino$doesCollide,
 					A2(author$project$Vec2$add, tetromino.position, offset),
 					rotatedMatrix,
 					playfield);
@@ -6947,7 +6978,7 @@ var elm$html$Html$td = _VirtualDom_node('td');
 var elm$html$Html$tr = _VirtualDom_node('tr');
 var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
-var author$project$Main$viewBoolTable = function (boolTable) {
+var author$project$Main$viewBlockTable = function (blockTable) {
 	var rowList = A2(
 		elm$core$List$map,
 		function (row) {
@@ -6963,13 +6994,24 @@ var author$project$Main$viewBoolTable = function (boolTable) {
 								[
 									A2(elm$html$Html$Attributes$style, 'width', '36px'),
 									A2(elm$html$Html$Attributes$style, 'height', '36px'),
-									col ? A2(elm$html$Html$Attributes$style, 'background-color', 'black') : A2(elm$html$Html$Attributes$style, 'background-color', 'gray')
+									function () {
+									switch (col.$) {
+										case 'Empty':
+											return A2(elm$html$Html$Attributes$style, 'background-color', 'lightgray');
+										case 'Garbage':
+											return A2(elm$html$Html$Attributes$style, 'background-color', 'gray');
+										case 'Conflict':
+											return A2(elm$html$Html$Attributes$style, 'background-color', 'red');
+										default:
+											return A2(elm$html$Html$Attributes$style, 'background-color', 'black');
+									}
+								}()
 								]),
 							_List_Nil);
 					},
 					row));
 		},
-		boolTable);
+		blockTable);
 	return A2(elm$html$Html$table, _List_Nil, rowList);
 };
 var elm$html$Html$button = _VirtualDom_node('button');
@@ -7067,9 +7109,9 @@ var author$project$Main$view = function (model) {
 					[
 						elm$html$Html$text('move up')
 					])),
-				author$project$Main$viewBoolTable(
+				author$project$Main$viewBlockTable(
 				author$project$Matrix$toLists(
-					A4(author$project$Matrix$stamp, elm$core$Basics$or, model.piece.position, model.piece.matrix, model.field)))
+					A4(author$project$Matrix$stamp, author$project$Block$collide, model.piece.position, model.piece.matrix, model.field)))
 			]));
 };
 var elm$browser$Browser$element = _Browser_element;
