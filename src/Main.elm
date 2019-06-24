@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Block exposing (Block)
 import Browser
 import Browser.Events
 import Html exposing (Html, button, div, table, td, text, tr)
@@ -25,20 +26,20 @@ main =
 
 
 exampleField =
-    Matrix.repeat { width = 10, height = 10 } Tetromino.GarbageBlock
-        |> Matrix.stamp (\a _ -> a) { x = 0, y = 0 } (Matrix.repeat { width = 4, height = 3 } Tetromino.EmptyBlock)
-        |> Matrix.stamp (\a _ -> a) { x = 4, y = 0 } (Matrix.repeat { width = 6, height = 5 } Tetromino.EmptyBlock)
-        |> Matrix.stamp (\a _ -> a) { x = 0, y = 3 } (Matrix.repeat { width = 2, height = 2 } Tetromino.EmptyBlock)
-        |> Matrix.stamp (\a _ -> a) { x = 2, y = 4 } (Matrix.repeat { width = 1, height = 6 } Tetromino.EmptyBlock)
-        |> Matrix.stamp (\a _ -> a) { x = 1, y = 6 } (Matrix.repeat { width = 1, height = 2 } Tetromino.EmptyBlock)
-        |> Matrix.set { x = 3, y = 7 } Tetromino.EmptyBlock
-        |> Matrix.set { x = 3, y = 7 } Tetromino.EmptyBlock
-        |> Matrix.set { x = 5, y = 5 } Tetromino.EmptyBlock
-        |> Matrix.set { x = 4, y = 3 } Tetromino.GarbageBlock
-        |> Matrix.stamp (\a _ -> a) { x = 7, y = 5 } (Matrix.repeat { width = 3, height = 2 } Tetromino.EmptyBlock)
-        |> Matrix.set { x = 7, y = 5 } Tetromino.GarbageBlock
-        |> Matrix.set { x = 7, y = 4 } Tetromino.GarbageBlock
-        |> Matrix.set { x = 7, y = 3 } Tetromino.GarbageBlock
+    Matrix.repeat { width = 10, height = 10 } Block.Garbage
+        |> Matrix.stamp (\a _ -> a) { x = 0, y = 0 } (Matrix.repeat { width = 4, height = 3 } Block.Empty)
+        |> Matrix.stamp (\a _ -> a) { x = 4, y = 0 } (Matrix.repeat { width = 6, height = 5 } Block.Empty)
+        |> Matrix.stamp (\a _ -> a) { x = 0, y = 3 } (Matrix.repeat { width = 2, height = 2 } Block.Empty)
+        |> Matrix.stamp (\a _ -> a) { x = 2, y = 4 } (Matrix.repeat { width = 1, height = 6 } Block.Empty)
+        |> Matrix.stamp (\a _ -> a) { x = 1, y = 6 } (Matrix.repeat { width = 1, height = 2 } Block.Empty)
+        |> Matrix.set { x = 3, y = 7 } Block.Empty
+        |> Matrix.set { x = 3, y = 7 } Block.Empty
+        |> Matrix.set { x = 5, y = 5 } Block.Empty
+        |> Matrix.set { x = 4, y = 3 } Block.Garbage
+        |> Matrix.stamp (\a _ -> a) { x = 7, y = 5 } (Matrix.repeat { width = 3, height = 2 } Block.Empty)
+        |> Matrix.set { x = 7, y = 5 } Block.Garbage
+        |> Matrix.set { x = 7, y = 4 } Block.Garbage
+        |> Matrix.set { x = 7, y = 3 } Block.Garbage
 
 
 type alias Vec2 =
@@ -133,7 +134,7 @@ keyDecoder =
 -- VIEW
 
 
-viewBlockTable : List (List Tetromino.Block) -> Html msg
+viewBlockTable : List (List Block) -> Html msg
 viewBlockTable blockTable =
     let
         rowList =
@@ -146,13 +147,13 @@ viewBlockTable blockTable =
                                     [ style "width" "36px"
                                     , style "height" "36px"
                                     , case col of
-                                        Tetromino.EmptyBlock ->
+                                        Block.Empty ->
                                             style "background-color" "lightgray"
 
-                                        Tetromino.GarbageBlock ->
+                                        Block.Garbage ->
                                             style "background-color" "gray"
 
-                                        Tetromino.ConflictBlock ->
+                                        Block.Conflict ->
                                             style "background-color" "red"
 
                                         _ ->
@@ -189,7 +190,7 @@ view model =
         , viewBlockTable
             (Matrix.toLists
                 (Matrix.stamp
-                    Tetromino.collideBlock
+                    Block.collide
                     model.piece.position
                     model.piece.matrix
                     model.field

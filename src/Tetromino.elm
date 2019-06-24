@@ -1,5 +1,6 @@
-module Tetromino exposing (Block(..), Playfield, Tetromino, collideBlock, i, j, l, move, rotateCCW, rotateCW, s, t, z)
+module Tetromino exposing (Playfield, Tetromino, i, j, l, move, rotateCCW, rotateCW, s, t, z)
 
+import Block exposing (Block)
 import List.Extra
 import Matrix exposing (Matrix)
 import Vec2
@@ -13,18 +14,6 @@ type alias Vec2 =
 
 type alias Playfield =
     Matrix Block
-
-
-type Block
-    = IBlock
-    | JBlock
-    | LBlock
-    | SBlock
-    | ZBlock
-    | TBlock
-    | GarbageBlock
-    | ConflictBlock
-    | EmptyBlock
 
 
 type Kind
@@ -59,11 +48,11 @@ type Orientation
 j : Tetromino
 j =
     { matrix =
-        Matrix.repeat { width = 3, height = 3 } EmptyBlock
-            |> Matrix.set { x = 0, y = 0 } JBlock
-            |> Matrix.set { x = 0, y = 1 } JBlock
-            |> Matrix.set { x = 1, y = 1 } JBlock
-            |> Matrix.set { x = 2, y = 1 } JBlock
+        Matrix.repeat { width = 3, height = 3 } Block.Empty
+            |> Matrix.set { x = 0, y = 0 } Block.J
+            |> Matrix.set { x = 0, y = 1 } Block.J
+            |> Matrix.set { x = 1, y = 1 } Block.J
+            |> Matrix.set { x = 2, y = 1 } Block.J
     , position = { x = 0, y = 0 }
     , orientation = Up
     , kind = J
@@ -73,11 +62,11 @@ j =
 l : Tetromino
 l =
     { matrix =
-        Matrix.repeat { width = 3, height = 3 } EmptyBlock
-            |> Matrix.set { x = 2, y = 0 } LBlock
-            |> Matrix.set { x = 0, y = 1 } LBlock
-            |> Matrix.set { x = 1, y = 1 } LBlock
-            |> Matrix.set { x = 2, y = 1 } LBlock
+        Matrix.repeat { width = 3, height = 3 } Block.Empty
+            |> Matrix.set { x = 2, y = 0 } Block.L
+            |> Matrix.set { x = 0, y = 1 } Block.L
+            |> Matrix.set { x = 1, y = 1 } Block.L
+            |> Matrix.set { x = 2, y = 1 } Block.L
     , position = { x = 0, y = 0 }
     , orientation = Up
     , kind = L
@@ -87,11 +76,11 @@ l =
 s : Tetromino
 s =
     { matrix =
-        Matrix.repeat { width = 3, height = 3 } EmptyBlock
-            |> Matrix.set { x = 1, y = 0 } SBlock
-            |> Matrix.set { x = 2, y = 0 } SBlock
-            |> Matrix.set { x = 0, y = 1 } SBlock
-            |> Matrix.set { x = 1, y = 1 } SBlock
+        Matrix.repeat { width = 3, height = 3 } Block.Empty
+            |> Matrix.set { x = 1, y = 0 } Block.S
+            |> Matrix.set { x = 2, y = 0 } Block.S
+            |> Matrix.set { x = 0, y = 1 } Block.S
+            |> Matrix.set { x = 1, y = 1 } Block.S
     , position = { x = 0, y = 0 }
     , orientation = Up
     , kind = S
@@ -101,11 +90,11 @@ s =
 t : Tetromino
 t =
     { matrix =
-        Matrix.repeat { width = 3, height = 3 } EmptyBlock
-            |> Matrix.set { x = 1, y = 0 } TBlock
-            |> Matrix.set { x = 0, y = 1 } TBlock
-            |> Matrix.set { x = 1, y = 1 } TBlock
-            |> Matrix.set { x = 2, y = 1 } TBlock
+        Matrix.repeat { width = 3, height = 3 } Block.Empty
+            |> Matrix.set { x = 1, y = 0 } Block.T
+            |> Matrix.set { x = 0, y = 1 } Block.T
+            |> Matrix.set { x = 1, y = 1 } Block.T
+            |> Matrix.set { x = 2, y = 1 } Block.T
     , position = { x = 0, y = 0 }
     , orientation = Up
     , kind = T
@@ -115,11 +104,11 @@ t =
 z : Tetromino
 z =
     { matrix =
-        Matrix.repeat { width = 3, height = 3 } EmptyBlock
-            |> Matrix.set { x = 0, y = 0 } ZBlock
-            |> Matrix.set { x = 1, y = 0 } ZBlock
-            |> Matrix.set { x = 1, y = 1 } ZBlock
-            |> Matrix.set { x = 2, y = 1 } ZBlock
+        Matrix.repeat { width = 3, height = 3 } Block.Empty
+            |> Matrix.set { x = 0, y = 0 } Block.Z
+            |> Matrix.set { x = 1, y = 0 } Block.Z
+            |> Matrix.set { x = 1, y = 1 } Block.Z
+            |> Matrix.set { x = 2, y = 1 } Block.Z
     , position = { x = 0, y = 0 }
     , orientation = Up
     , kind = Z
@@ -129,11 +118,11 @@ z =
 i : Tetromino
 i =
     { matrix =
-        Matrix.repeat { width = 4, height = 4 } EmptyBlock
-            |> Matrix.set { x = 0, y = 1 } IBlock
-            |> Matrix.set { x = 1, y = 1 } IBlock
-            |> Matrix.set { x = 2, y = 1 } IBlock
-            |> Matrix.set { x = 3, y = 1 } IBlock
+        Matrix.repeat { width = 4, height = 4 } Block.Empty
+            |> Matrix.set { x = 0, y = 1 } Block.I
+            |> Matrix.set { x = 1, y = 1 } Block.I
+            |> Matrix.set { x = 2, y = 1 } Block.I
+            |> Matrix.set { x = 3, y = 1 } Block.I
     , position = { x = 0, y = 0 }
     , orientation = Up
     , kind = I
@@ -320,51 +309,11 @@ jlstzOffsets rotation orientation =
                     ]
 
 
-isConflict : Block -> Bool
-isConflict block =
-    case block of
-        ConflictBlock ->
-            True
-
-        _ ->
-            False
-
-
-isNotEmpty : Block -> Bool
-isNotEmpty block =
-    case block of
-        EmptyBlock ->
-            False
-
-        _ ->
-            True
-
-
-collideBlock : Block -> Block -> Block
-collideBlock a b =
-    case a of
-        EmptyBlock ->
-            case b of
-                EmptyBlock ->
-                    EmptyBlock
-
-                _ ->
-                    b
-
-        _ ->
-            case b of
-                EmptyBlock ->
-                    a
-
-                _ ->
-                    ConflictBlock
-
-
 doesCollide : Vec2 -> Matrix Block -> Matrix Block -> Bool
 doesCollide offset piece field =
     let
         insidePart =
-            Matrix.intersection collideBlock offset piece field
+            Matrix.intersection Block.collide offset piece field
 
         insideDim =
             Matrix.dimensions insidePart
@@ -374,16 +323,16 @@ doesCollide offset piece field =
 
         outsidePart =
             Matrix.stamp
-                (\_ _ -> EmptyBlock)
+                (\_ _ -> Block.Empty)
                 (Matrix.clampToEdge pieceDim (Vec2.negate offset))
-                (Matrix.repeat insideDim EmptyBlock)
+                (Matrix.repeat insideDim Block.Empty)
                 piece
 
         doesCollideWithWall =
-            Matrix.any isNotEmpty outsidePart
+            Matrix.any Block.isNotEmpty outsidePart
 
         doesCollideInside =
-            Matrix.any isConflict insidePart
+            Matrix.any Block.isConflict insidePart
     in
     doesCollideWithWall || doesCollideInside
 
