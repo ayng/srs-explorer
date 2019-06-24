@@ -51,6 +51,7 @@ type alias Vec2 =
 type alias Model =
     { field : Tetromino.Playfield
     , piece : Tetromino.Tetromino
+    , scenarios : List Tetromino.Playfield
     }
 
 
@@ -58,6 +59,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { field = exampleField
       , piece = Tetromino.t
+      , scenarios = [ exampleField, exampleField ]
       }
     , Cmd.none
     )
@@ -78,10 +80,20 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         RotateLeft ->
-            ( { model | piece = Tetromino.rotateCCW model.field model.piece }, Cmd.none )
+            ( { model
+                | piece = Tetromino.rotateCCW model.field model.piece
+                , scenarios = Tetromino.rotateScenariosCCW model.field model.piece
+              }
+            , Cmd.none
+            )
 
         RotateRight ->
-            ( { model | piece = Tetromino.rotateCW model.field model.piece }, Cmd.none )
+            ( { model
+                | piece = Tetromino.rotateCW model.field model.piece
+                , scenarios = Tetromino.rotateScenariosCW model.field model.piece
+              }
+            , Cmd.none
+            )
 
         Move c ->
             ( { model | piece = Tetromino.move c model.field model.piece }
@@ -134,39 +146,55 @@ keyDecoder =
 -- VIEW
 
 
-viewBlockTable : List (List Block) -> Html msg
-viewBlockTable blockTable =
+multiplicationSignString =
+    String.fromChar (Char.fromCode 215)
+
+
+viewBlock : Int -> Block -> Html msg
+viewBlock size block =
+    let
+        attributes =
+            [ style "width" (String.append (String.fromInt size) "px")
+            , style "height" (String.append (String.fromInt size) "px")
+            ]
+    in
+    case block of
+        Block.Empty ->
+            td (List.append attributes [ style "background-color" "lightgray" ]) []
+
+        Block.Conflict ->
+            td
+                (List.append attributes
+                    [ style "color" "red"
+                    , style "background-color" "pink"
+                    , style "font-size" (String.append (String.fromInt size) "px")
+                    , style "text-align" "center"
+                    , style "line-height" "0"
+                    ]
+                )
+                [ text multiplicationSignString ]
+
+        Block.Garbage ->
+            td (List.append attributes [ style "background-color" "gray" ]) []
+
+        _ ->
+            td (List.append attributes [ style "background-color" "black" ]) []
+
+
+viewBlockTable : Int -> List (List Block) -> Html msg
+viewBlockTable size blockTable =
     let
         rowList =
             List.map
-                (\row ->
-                    tr []
-                        (List.map
-                            (\col ->
-                                td
-                                    [ style "width" "36px"
-                                    , style "height" "36px"
-                                    , case col of
-                                        Block.Empty ->
-                                            style "background-color" "lightgray"
-
-                                        Block.Garbage ->
-                                            style "background-color" "gray"
-
-                                        Block.Conflict ->
-                                            style "background-color" "red"
-
-                                        _ ->
-                                            style "background-color" "black"
-                                    ]
-                                    []
-                            )
-                            row
-                        )
-                )
+                (\row -> tr [] (List.map (viewBlock size) row))
                 blockTable
     in
-    table [] rowList
+    table [ style "display" "inline-block" ] rowList
+
+
+viewPlayfield : Int -> Tetromino.Playfield -> Html msg
+viewPlayfield size playfield =
+    viewBlockTable size (Matrix.toLists playfield)
 
 
 boolToString : Bool -> String
@@ -181,13 +209,16 @@ boolToString b =
 view : Model -> Html Msg
 view model =
     div []
-        [ button [ onClick RotateLeft ] [ text "rotate left" ]
-        , button [ onClick RotateRight ] [ text "rotate right" ]
-        , button [ onClick (Move { x = 1, y = 0 }) ] [ text "move right" ]
-        , button [ onClick (Move { x = -1, y = 0 }) ] [ text "move left" ]
-        , button [ onClick (Move { x = 0, y = 1 }) ] [ text "move down" ]
-        , button [ onClick (Move { x = 0, y = -1 }) ] [ text "move up" ]
+        [ div []
+            [ button [ onClick RotateLeft ] [ text "rotate left" ]
+            , button [ onClick RotateRight ] [ text "rotate right" ]
+            , button [ onClick (Move { x = 1, y = 0 }) ] [ text "move right" ]
+            , button [ onClick (Move { x = -1, y = 0 }) ] [ text "move left" ]
+            , button [ onClick (Move { x = 0, y = 1 }) ] [ text "move down" ]
+            , button [ onClick (Move { x = 0, y = -1 }) ] [ text "move up" ]
+            ]
         , viewBlockTable
+            32
             (Matrix.toLists
                 (Matrix.stamp
                     Block.collide
@@ -195,5 +226,18 @@ view model =
                     model.piece.matrix
                     model.field
                 )
+            )
+        , div []
+            (List.map
+                (\pf ->
+                    div
+                        [ style "border" "1px solid black"
+                        , style "display" "inline-block"
+                        , style "margin" "8px"
+                        , style "padding" "8px"
+                        ]
+                        [ viewPlayfield 16 pf ]
+                )
+                model.scenarios
             )
         ]

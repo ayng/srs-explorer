@@ -1,4 +1,4 @@
-module Tetromino exposing (Playfield, Tetromino, i, j, l, move, rotateCCW, rotateCW, s, t, z)
+module Tetromino exposing (Playfield, Tetromino, i, j, l, move, rotateCCW, rotateCW, rotateScenariosCCW, rotateScenariosCW, s, t, z)
 
 import Block exposing (Block)
 import List.Extra
@@ -315,6 +315,9 @@ doesCollide offset piece field =
         insidePart =
             Matrix.intersection Block.collide offset piece field
 
+        doesCollideInside =
+            Matrix.any Block.isConflict insidePart
+
         insideDim =
             Matrix.dimensions insidePart
 
@@ -330,9 +333,6 @@ doesCollide offset piece field =
 
         doesCollideWithWall =
             Matrix.any Block.isNotEmpty outsidePart
-
-        doesCollideInside =
-            Matrix.any Block.isConflict insidePart
     in
     doesCollideWithWall || doesCollideInside
 
@@ -347,6 +347,7 @@ rotateCCW =
 
 rotate : Rotation -> Playfield -> Tetromino -> Tetromino
 rotate rotation playfield tetromino =
+    -- TODO use rotateScenarios in rotate
     let
         getOffsets =
             case tetromino.kind of
@@ -395,6 +396,57 @@ rotate rotation playfield tetromino =
                     tetromino
     in
     newTetromino
+
+
+rotateScenariosCW =
+    rotateScenarios Clockwise
+
+
+rotateScenariosCCW =
+    rotateScenarios Counterclockwise
+
+
+rotateScenarios : Rotation -> Playfield -> Tetromino -> List Playfield
+rotateScenarios rotation playfield tetromino =
+    let
+        getOffsets =
+            case tetromino.kind of
+                I ->
+                    iOffsets
+
+                _ ->
+                    jlstzOffsets
+
+        offsets =
+            getOffsets rotation tetromino.orientation
+
+        newOrientation =
+            orient rotation tetromino.orientation
+
+        rotatedMatrix =
+            case rotation of
+                Clockwise ->
+                    Matrix.rotateCW tetromino.matrix
+
+                Counterclockwise ->
+                    Matrix.rotateCCW tetromino.matrix
+
+        scenarios =
+            List.map
+                (\offset ->
+                    Matrix.repeat { width = 8, height = 8 } Block.Garbage
+                        |> Matrix.stamp
+                            (\a _ -> a)
+                            (Vec2.add { x = 2, y = 2 } (Vec2.negate tetromino.position))
+                            playfield
+                        |> Matrix.stamp
+                            Block.collide
+                            (Vec2.add { x = 2, y = 2 } offset)
+                            rotatedMatrix
+                )
+                offsets
+    in
+    scenarios
 
 
 move : Vec2 -> Playfield -> Tetromino -> Tetromino

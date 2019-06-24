@@ -5214,7 +5214,12 @@ var elm$core$Platform$Cmd$batch = _Platform_batch;
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = function (_n0) {
 	return _Utils_Tuple2(
-		{field: author$project$Main$exampleField, piece: author$project$Tetromino$t},
+		{
+			field: author$project$Main$exampleField,
+			piece: author$project$Tetromino$t,
+			scenarios: _List_fromArray(
+				[author$project$Main$exampleField, author$project$Main$exampleField])
+		},
 		elm$core$Platform$Cmd$none);
 };
 var author$project$Main$Move = function (a) {
@@ -6941,6 +6946,57 @@ var author$project$Tetromino$rotate = F3(
 var author$project$Tetromino$rotateCCW = author$project$Tetromino$rotate(author$project$Tetromino$Counterclockwise);
 var author$project$Tetromino$Clockwise = {$: 'Clockwise'};
 var author$project$Tetromino$rotateCW = author$project$Tetromino$rotate(author$project$Tetromino$Clockwise);
+var author$project$Tetromino$rotateScenarios = F3(
+	function (rotation, playfield, tetromino) {
+		var rotatedMatrix = function () {
+			if (rotation.$ === 'Clockwise') {
+				return author$project$Matrix$rotateCW(tetromino.matrix);
+			} else {
+				return author$project$Matrix$rotateCCW(tetromino.matrix);
+			}
+		}();
+		var newOrientation = A2(author$project$Tetromino$orient, rotation, tetromino.orientation);
+		var getOffsets = function () {
+			var _n1 = tetromino.kind;
+			if (_n1.$ === 'I') {
+				return author$project$Tetromino$iOffsets;
+			} else {
+				return author$project$Tetromino$jlstzOffsets;
+			}
+		}();
+		var offsets = A2(getOffsets, rotation, tetromino.orientation);
+		var scenarios = A2(
+			elm$core$List$map,
+			function (offset) {
+				return A4(
+					author$project$Matrix$stamp,
+					author$project$Block$collide,
+					A2(
+						author$project$Vec2$add,
+						{x: 2, y: 2},
+						offset),
+					rotatedMatrix,
+					A4(
+						author$project$Matrix$stamp,
+						F2(
+							function (a, _n0) {
+								return a;
+							}),
+						A2(
+							author$project$Vec2$add,
+							{x: 2, y: 2},
+							author$project$Vec2$negate(tetromino.position)),
+						playfield,
+						A2(
+							author$project$Matrix$repeat,
+							{height: 8, width: 8},
+							author$project$Block$Garbage)));
+			},
+			offsets);
+		return scenarios;
+	});
+var author$project$Tetromino$rotateScenariosCCW = author$project$Tetromino$rotateScenarios(author$project$Tetromino$Counterclockwise);
+var author$project$Tetromino$rotateScenariosCW = author$project$Tetromino$rotateScenarios(author$project$Tetromino$Clockwise);
 var author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -6949,7 +7005,8 @@ var author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							piece: A2(author$project$Tetromino$rotateCCW, model.field, model.piece)
+							piece: A2(author$project$Tetromino$rotateCCW, model.field, model.piece),
+							scenarios: A2(author$project$Tetromino$rotateScenariosCCW, model.field, model.piece)
 						}),
 					elm$core$Platform$Cmd$none);
 			case 'RotateRight':
@@ -6957,7 +7014,8 @@ var author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							piece: A2(author$project$Tetromino$rotateCW, model.field, model.piece)
+							piece: A2(author$project$Tetromino$rotateCW, model.field, model.piece),
+							scenarios: A2(author$project$Tetromino$rotateScenariosCW, model.field, model.piece)
 						}),
 					elm$core$Platform$Cmd$none);
 			case 'Move':
@@ -6973,51 +7031,131 @@ var author$project$Main$update = F2(
 				return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 		}
 	});
-var elm$html$Html$table = _VirtualDom_node('table');
-var elm$html$Html$td = _VirtualDom_node('td');
-var elm$html$Html$tr = _VirtualDom_node('tr');
-var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
-var author$project$Main$viewBlockTable = function (blockTable) {
-	var rowList = A2(
-		elm$core$List$map,
-		function (row) {
-			return A2(
-				elm$html$Html$tr,
-				_List_Nil,
-				A2(
-					elm$core$List$map,
-					function (col) {
-						return A2(
-							elm$html$Html$td,
-							_List_fromArray(
-								[
-									A2(elm$html$Html$Attributes$style, 'width', '36px'),
-									A2(elm$html$Html$Attributes$style, 'height', '36px'),
-									function () {
-									switch (col.$) {
-										case 'Empty':
-											return A2(elm$html$Html$Attributes$style, 'background-color', 'lightgray');
-										case 'Garbage':
-											return A2(elm$html$Html$Attributes$style, 'background-color', 'gray');
-										case 'Conflict':
-											return A2(elm$html$Html$Attributes$style, 'background-color', 'red');
-										default:
-											return A2(elm$html$Html$Attributes$style, 'background-color', 'black');
-									}
-								}()
-								]),
-							_List_Nil);
-					},
-					row));
-		},
-		blockTable);
-	return A2(elm$html$Html$table, _List_Nil, rowList);
+var elm$core$Char$fromCode = _Char_fromCode;
+var elm$core$String$cons = _String_cons;
+var elm$core$String$fromChar = function (_char) {
+	return A2(elm$core$String$cons, _char, '');
 };
-var elm$html$Html$button = _VirtualDom_node('button');
-var elm$html$Html$div = _VirtualDom_node('div');
+var author$project$Main$multiplicationSignString = elm$core$String$fromChar(
+	elm$core$Char$fromCode(215));
+var elm$core$String$append = _String_append;
+var elm$html$Html$td = _VirtualDom_node('td');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
+var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
+var author$project$Main$viewBlock = F2(
+	function (size, block) {
+		var attributes = _List_fromArray(
+			[
+				A2(
+				elm$html$Html$Attributes$style,
+				'width',
+				A2(
+					elm$core$String$append,
+					elm$core$String$fromInt(size),
+					'px')),
+				A2(
+				elm$html$Html$Attributes$style,
+				'height',
+				A2(
+					elm$core$String$append,
+					elm$core$String$fromInt(size),
+					'px'))
+			]);
+		switch (block.$) {
+			case 'Empty':
+				return A2(
+					elm$html$Html$td,
+					A2(
+						elm$core$List$append,
+						attributes,
+						_List_fromArray(
+							[
+								A2(elm$html$Html$Attributes$style, 'background-color', 'lightgray')
+							])),
+					_List_Nil);
+			case 'Conflict':
+				return A2(
+					elm$html$Html$td,
+					A2(
+						elm$core$List$append,
+						attributes,
+						_List_fromArray(
+							[
+								A2(elm$html$Html$Attributes$style, 'color', 'red'),
+								A2(elm$html$Html$Attributes$style, 'background-color', 'pink'),
+								A2(
+								elm$html$Html$Attributes$style,
+								'font-size',
+								A2(
+									elm$core$String$append,
+									elm$core$String$fromInt(size),
+									'px')),
+								A2(elm$html$Html$Attributes$style, 'text-align', 'center'),
+								A2(elm$html$Html$Attributes$style, 'line-height', '0')
+							])),
+					_List_fromArray(
+						[
+							elm$html$Html$text(author$project$Main$multiplicationSignString)
+						]));
+			case 'Garbage':
+				return A2(
+					elm$html$Html$td,
+					A2(
+						elm$core$List$append,
+						attributes,
+						_List_fromArray(
+							[
+								A2(elm$html$Html$Attributes$style, 'background-color', 'gray')
+							])),
+					_List_Nil);
+			default:
+				return A2(
+					elm$html$Html$td,
+					A2(
+						elm$core$List$append,
+						attributes,
+						_List_fromArray(
+							[
+								A2(elm$html$Html$Attributes$style, 'background-color', 'black')
+							])),
+					_List_Nil);
+		}
+	});
+var elm$html$Html$table = _VirtualDom_node('table');
+var elm$html$Html$tr = _VirtualDom_node('tr');
+var author$project$Main$viewBlockTable = F2(
+	function (size, blockTable) {
+		var rowList = A2(
+			elm$core$List$map,
+			function (row) {
+				return A2(
+					elm$html$Html$tr,
+					_List_Nil,
+					A2(
+						elm$core$List$map,
+						author$project$Main$viewBlock(size),
+						row));
+			},
+			blockTable);
+		return A2(
+			elm$html$Html$table,
+			_List_fromArray(
+				[
+					A2(elm$html$Html$Attributes$style, 'display', 'inline-block')
+				]),
+			rowList);
+	});
+var author$project$Main$viewPlayfield = F2(
+	function (size, playfield) {
+		return A2(
+			author$project$Main$viewBlockTable,
+			size,
+			author$project$Matrix$toLists(playfield));
+	});
+var elm$html$Html$button = _VirtualDom_node('button');
+var elm$html$Html$div = _VirtualDom_node('div');
 var elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -7042,76 +7180,105 @@ var author$project$Main$view = function (model) {
 		_List_fromArray(
 			[
 				A2(
-				elm$html$Html$button,
+				elm$html$Html$div,
+				_List_Nil,
 				_List_fromArray(
 					[
-						elm$html$Html$Events$onClick(author$project$Main$RotateLeft)
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('rotate left')
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(author$project$Main$RotateLeft)
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('rotate left')
+							])),
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(author$project$Main$RotateRight)
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('rotate right')
+							])),
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(
+								author$project$Main$Move(
+									{x: 1, y: 0}))
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('move right')
+							])),
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(
+								author$project$Main$Move(
+									{x: -1, y: 0}))
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('move left')
+							])),
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(
+								author$project$Main$Move(
+									{x: 0, y: 1}))
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('move down')
+							])),
+						A2(
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(
+								author$project$Main$Move(
+									{x: 0, y: -1}))
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('move up')
+							]))
 					])),
 				A2(
-				elm$html$Html$button,
-				_List_fromArray(
-					[
-						elm$html$Html$Events$onClick(author$project$Main$RotateRight)
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('rotate right')
-					])),
-				A2(
-				elm$html$Html$button,
-				_List_fromArray(
-					[
-						elm$html$Html$Events$onClick(
-						author$project$Main$Move(
-							{x: 1, y: 0}))
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('move right')
-					])),
-				A2(
-				elm$html$Html$button,
-				_List_fromArray(
-					[
-						elm$html$Html$Events$onClick(
-						author$project$Main$Move(
-							{x: -1, y: 0}))
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('move left')
-					])),
-				A2(
-				elm$html$Html$button,
-				_List_fromArray(
-					[
-						elm$html$Html$Events$onClick(
-						author$project$Main$Move(
-							{x: 0, y: 1}))
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('move down')
-					])),
-				A2(
-				elm$html$Html$button,
-				_List_fromArray(
-					[
-						elm$html$Html$Events$onClick(
-						author$project$Main$Move(
-							{x: 0, y: -1}))
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('move up')
-					])),
-				author$project$Main$viewBlockTable(
+				author$project$Main$viewBlockTable,
+				32,
 				author$project$Matrix$toLists(
-					A4(author$project$Matrix$stamp, author$project$Block$collide, model.piece.position, model.piece.matrix, model.field)))
+					A4(author$project$Matrix$stamp, author$project$Block$collide, model.piece.position, model.piece.matrix, model.field))),
+				A2(
+				elm$html$Html$div,
+				_List_Nil,
+				A2(
+					elm$core$List$map,
+					function (pf) {
+						return A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									A2(elm$html$Html$Attributes$style, 'border', '1px solid black'),
+									A2(elm$html$Html$Attributes$style, 'display', 'inline-block'),
+									A2(elm$html$Html$Attributes$style, 'margin', '8px'),
+									A2(elm$html$Html$Attributes$style, 'padding', '8px')
+								]),
+							_List_fromArray(
+								[
+									A2(author$project$Main$viewPlayfield, 16, pf)
+								]));
+					},
+					model.scenarios))
 			]));
 };
 var elm$browser$Browser$element = _Browser_element;
